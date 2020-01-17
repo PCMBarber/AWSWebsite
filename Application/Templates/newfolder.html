@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block body_content %}
+    <div class="main">
+        <p class="sign" align="center">{{ title }}</p>
+        <form method="POST" action="" class="form1">
+            {{ form.hidden_tag() }}
+            <div class="un " type="text" align="center" placeholder="Username">
+                {{ form.name.label }}
+                {% if form.name.errors %}
+                    {{ form.name }}
+                    <div class="error">
+                        {% for error in form.name.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.name }}
+                {% endif %}
+            </div>
+{% endblock body_content %}

@@ -1,0 +1,8 @@
+{% extends "layout.html" %}
+{% block body_content %}
+    <div class="dash">
+        <p class="sign" align="center">{{ content.title }}</p>
+        <p class="display" align="left">{{ content.content }}</p>
+        <img src="{{ image }}" align="right" alt="Post Image">
+    </div>
+{% endblock body_content %}

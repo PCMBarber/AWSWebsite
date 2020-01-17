@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block body_content %}
+    <div class="dash">
+        <div class ="display">
+            <a href="{{ url_for('new_forum') }}">New Forum</a>
+        </div>
+        {% for name in forums %}
+            <div class ="display">
+                <h4>{{ name }}</h4>
+                <a href="{{ url_for('forum', forum=name) }}">Enter</a>
+            </div>
+            <br>
+        {% endfor %}
+    </div>    
+
+{% endblock body_content %}

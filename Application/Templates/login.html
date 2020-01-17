@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block body_content %}
+    <div class="main">
+        <p class="sign" align="center">{{ title }}</p>
+        <form method="POST" action="" class="form1">
+            {{ form.hidden_tag() }}
+            <div class="un " type="text" align="center" placeholder="Username">
+                {{ form.user_name.label }}
+                {% if form.user_name.errors %}
+                    {{ form.user_name }}
+                    <div class="error">
+                        {% for error in form.user_name.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.user_name }}
+                {% endif %}
+            </div>
+            <div class="pass" type="password" align="center" placeholder="Password">
+                {{ form.password.label }}
+                {% if form.password.errors %}
+                    {{ form.password }}
+                    <div class="error">
+                        {% for error in form.password.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.password }}
+                {% endif %}
+            </div>
+            <div class="form-group" align="center">
+                {{ form.remember.label }}
+                {{ form.remember }}
+            </div>
+            <div class="submit" align="center">
+                {{ form.submit }}
+            </div>
+        <p class="forgot" align="center"><a href="{{ url_for('register') }}">Need an Account?</p>
+        </form>
+    </div>
+{% endblock body_content %}
