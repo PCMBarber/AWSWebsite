@@ -53,7 +53,7 @@ def dashboard():
     forumlist = response.json()['body']
     for entry in forumlist:
         forumName = entry['forum']
-        if forumName is in forums:
+        if forumName in forums:
             continue
         else:
             forums.append(forumName)
@@ -68,7 +68,7 @@ def forum(forum):
     threadlist=response.json()['body']
     for entry in threadlist:
         threadName = entry["thread"]
-        if threadName is in threads:
+        if threadName in threads:
             continue
         else:
             threads.append(threadName)
