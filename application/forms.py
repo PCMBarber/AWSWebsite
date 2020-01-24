@@ -52,8 +52,4 @@ class NewPost(FlaskForm):
         validators=[DataRequired(message=None), Length(min=2, max=250)
         ]    
     )
-    image = FileField('Image', 
-        validators=[FileRequired(), FileAllowed(['jpg', 'png'], 'Images Only')
-        ]
-    )
     submit = SubmitField('Submit')
