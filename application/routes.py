@@ -91,7 +91,7 @@ def new_forum():
 
 @app.route('/new_thread/<forum>', methods=['GET','POST'])
 @login_required
-def thread(forum):
+def new_thread(forum):
     form = NewFolder()
     if form.validate_on_submit():
         return redirect(url_for('new_post', forum=forum, thread=form.name.data))
