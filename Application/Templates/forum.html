@@ -7,7 +7,7 @@
         {% for name in threads %}
             <div class ="display">
                 <h4>{{ name }}</h4>
-                <a href="{{ url_for('thread', forum=name) }}">Enter</a>
+                <a href="{{ url_for('thread', forum=title, thread=name) }}">Enter</a>
             </div>
             <br>
         {% endfor %}

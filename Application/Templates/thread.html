@@ -7,7 +7,7 @@
         {% for entry in posts %}
             <div class ="display">
                 <h4>{{ entry.title }}</h4>
-                <a href="{{ url_for('view_post', post=entry.title) }}">View</a>
+                <p>{{ entry.content }}</p>
             </div>
             <br>
         {% endfor %}
