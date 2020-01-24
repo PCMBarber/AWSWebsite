@@ -1,0 +1,151 @@
+VPC:  
+  Type: AWS::EC2::VPC          
+  Properties:
+    CidrBlock: 10.41.0.0/16   
+    Tags:                     
+      - Key: Name
+        Value: Ansible-Stack
+
+InternetGateway:
+  Type: AWS::EC2::InternetGateway
+  Properties:
+    Tags:
+      - Key: Name
+        Value: Stack-Gateway
+VPCGatewayAttachment:
+  Type: AWS::EC2::VPCGatewayAttachment
+  Properties:
+    InternetGatewayId: !Ref InternetGateway 
+    VpcId: !Ref VPC
+
+SubnetAPIZoneA:
+  Type: AWS::EC2::Subnet
+  Properties:
+    AvailabilityZone: !Join ["", [!Ref "AWS::Region", "a"]] 
+    CidrBlock: 10.41.0.0/26                                  
+    VpcId: !Ref VPC
+SubnetAPIZoneB:
+  Type: AWS::EC2::Subnet
+  Properties:
+    AvailabilityZone: !Join ["", [!Ref "AWS::Region", "b"]]  
+    CidrBlock: 10.41.0.64/26                                 
+    VpcId: !Ref VPC
+
+SecurityGroupAPILoadBalancer:
+  Type: AWS::EC2::SecurityGroup
+  Properties:
+    GroupDescription: !Join ["-", [!Ref "AWS::StackName", "api-elb"]]
+    SecurityGroupEgress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: "-1"
+        IpProtocol: "-1"
+        ToPort: "-1"
+    SecurityGroupIngress: 
+      - CidrIp: 0.0.0.0/0
+        FromPort: "80"
+        IpProtocol: tcp
+        ToPort: "80"
+    VpcId: !Ref VPC
+SecurityGroupAPI:
+  Type: AWS::EC2::SecurityGroup
+  Properties:
+    GroupDescription: !Join ["-", [!Ref "AWS::StackName", "api-elb"]]
+    SecurityGroupEgress: 
+      - CidrIp: 0.0.0.0/0
+        FromPort: "-1"
+        IpProtocol: "-1"
+        ToPort: "-1"
+    SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0 
+        FromPort: "22"
+        IpProtocol: tcp
+        ToPort: "22"
+      - FromPort: "5000" 
+        ToPort: "5000"            
+        IpProtocol: tcp            
+        SourceSecurityGroupId: !Ref SecurityGroupAPILoadBalancer
+    VpcId: !Ref VPC
+SecurityGroupWorker:
+  Type: AWS::EC2::SecurityGroup
+  Properties:
+    GroupDescription: !Join ["-", [!Ref "AWS::StackName", "api-elb"]]
+    SecurityGroupEgress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: "-1"
+        IpProtocol: "-1"
+        ToPort: "-1"
+    SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0 
+        FromPort: "22"
+        IpProtocol: tcp
+        ToPort: "22"
+    VpcId: !Ref VPC
+
+LoadBalancerAPI:
+  Type: AWS::ElasticLoadBalancing::LoadBalancer
+  Properties:
+    CrossZone: true
+    HealthCheck:
+      HealthyThreshold: "5"
+      Interval: "15" 
+      Target: HTTP:80/ping 
+      Timeout: "8"
+      UnhealthyThreshold: "2"
+    Listeners:
+      - LoadBalancerPort: "80"
+        Protocol: HTTP
+        InstancePort: "5000"
+    LoadBalancerName: !Join ["-", [!Ref "AWS::StackName", "api"]]
+    SecurityGroups:
+      - !Ref SecurityGroupAPILoadBalancer
+    Subnets:
+      - !Ref SubnetAPIZoneA
+      - !Ref SubnetAPIZoneB
+
+LaunchConfigurationAPI:
+        Type: AWS::AutoScaling::LaunchConfiguration
+        DependsOn:
+        - SecurityGroupAPI                   # We set this explicit dependency to enforce security groups to be created before the launch configuration is created.
+        Properties:
+            AssociatePublicIpAddress: true   # When set, an instance is assigned a public IP address as well as a private one. Required for access from outside the VPC.
+            BlockDeviceMappings:             # Associates storage devices with the instances.
+            - DeviceName: "/dev/sda1"        # The device will be available at this path for mounting.
+              Ebs:                           # Specifies that this should be an Elastic Block Storage volume.
+                  VolumeSize: "10"           # The storage space on the device, in gigabytes.
+                  VolumeType: gp2            # Specifies the block device type - gp2 is a general-purpose SSD that should suffice for most instances.
+            ImageId: "ami-#########"         # Specifies the AMI (image) that will be used as the base for these instances. This is intentionally left
+                                             # as a placeholder for now, as AMIs will be discussed below.
+            InstanceType: "t2.micro"         # The EC2 instance type to provision. As with database instances, several sizes and purposes are available.
+            KeyName: "CloudFormationKeyPair"                     # AWS allows you to assign a keypair to the instance. It is recommended that you create a separate keypair
+                                             # outside of the CloudFormation stack, download the private key, and specify that as your keyname. You must
+                                             # provide a valid value to this property if you wish to access your instances through SSH.
+                                             # Due to the nature of keypairs (private keys are only available for download on creation), they are not available
+                                             # as CloudFormation resources.
+            SecurityGroups:                  # Assigns the security groups specified here to each instance created by the configuration.
+            - !Ref SecurityGroupAPI
+            UserData:                        # UserData is a base64-encoded shell script that runs after the instane is created as root.
+                Fn::Base64:                  # Fn::Base64 is a function key that base64-encodes the value string.
+                    !Join ["\n", [
+                        "#!/bin/bash",
+                        "service my-api-service start"
+                    ]]
+  
+AutoScalingGroupAPI:
+  Type: AWS::AutoScaling::AutoScalingGroup
+  DependsOn:             
+    - LoadBalancerAPI
+  Properties:
+    DesiredCapacity: 3
+    LaunchConfigurationName: !Ref LaunchConfigurationAPI
+    LoadBalancerNames:
+        - !Ref LoadBalancerAPI
+    MaxSize: 4                 
+    MinSize: 2                
+    VPCZoneIdentifier:         
+      - !Ref SubnetAPIZoneA
+      - !Ref SubnetAPIZoneB
+  UpdatePolicy:                 
+    AutoScalingRollingUpdate:
+      MaxBatchSize: 1 
+      MinInstancesInService: 1
+      PauseTime: PT1M
