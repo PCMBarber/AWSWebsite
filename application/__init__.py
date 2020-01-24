@@ -5,9 +5,6 @@ from os import getenv
 import os
 
 app = Flask(__name__)
-FOLDER = os.path.join('Application', 'Images')
-app.config['UPLOAD_FOLDER'] = FOLDER
-db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 

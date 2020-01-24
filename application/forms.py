@@ -1,7 +1,6 @@
 from wtforms import StringField, SubmitField, IntegerField, PasswordField, BooleanField
 from flask_wtf import FlaskForm
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
-from application.models import user
 
 class LoginForm(FlaskForm):
     user_name = StringField('User name: ',
@@ -37,12 +36,6 @@ class RegisterForm(FlaskForm):
         ]    
     )
     submit = SubmitField('Register')
-    
-    def validate_user_name(self, user_name):
-        user = users.query.filter_by(user_name=user_name.data).first()
-        
-        if user:
-            raise ValidationError('User name is already in use!')
 
 class NewFolder(FlaskForm):
     name = StringField('Title: ',
@@ -64,9 +57,3 @@ class NewPost(FlaskForm):
         ]
     )
     submit = SubmitField('Submit')
-    
-    def validate_title(self, title):
-        user = posts.query.filter_by(title=title.data).first()
-        
-        if user:
-            raise ValidationError('post name is already in use!')
