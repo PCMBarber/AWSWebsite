@@ -5,6 +5,7 @@ from os import getenv
 import os
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = "hdbvgfjmdbfgjb"
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
