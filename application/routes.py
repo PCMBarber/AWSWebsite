@@ -125,8 +125,13 @@ class User(flask_login.UserMixin):
 def user_loader(username):
     payload = {'body':{"username":username}}
     userjson = requests.get('https://krqrgv5s6b.execute-api.eu-west-2.amazonaws.com/Forum/forumuser', json=payload)
+<<<<<<< HEAD
     request = userjson.json()
     account = request['body']
+=======
+    account = userjson.json()
+	#account = request['body']
+>>>>>>> 833d1f736ae8976556132c8dfd97f119f336efd2
     if account:
         user = User()
         user.id = account['username']
