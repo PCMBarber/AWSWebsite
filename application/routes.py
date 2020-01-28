@@ -9,11 +9,10 @@ import requests, json, sys, flask_login
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-
         payload={'body':{"username":form.user_name.data}}
         userjson = requests.get('https://krqrgv5s6b.execute-api.eu-west-2.amazonaws.com/Forum/forumuser', json=payload)
-	oof = userjson.json()
-	user = oof['body']
+	    oof = userjson.json()
+	    user = oof['body']
 
         if user and pw.verify_password(user['password'], form.password.data):
             next_page = request.args.get('next')
@@ -125,13 +124,8 @@ class User(flask_login.UserMixin):
 def user_loader(username):
     payload = {'body':{"username":username}}
     userjson = requests.get('https://krqrgv5s6b.execute-api.eu-west-2.amazonaws.com/Forum/forumuser', json=payload)
-<<<<<<< HEAD
-    request = userjson.json()
-    account = request['body']
-=======
     account = userjson.json()
 	#account = request['body']
->>>>>>> 833d1f736ae8976556132c8dfd97f119f336efd2
     if account:
         user = User()
         user.id = account['username']
