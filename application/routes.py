@@ -1,8 +1,8 @@
 from flask import render_template, redirect, url_for, Response, request
-from flask_login import login_user, current_user, logout_user, loginmanager
-from application import app, password_hash as pw
+from flask_login import login_user, current_user, logout_user, login_required
+from application import app, password_hash as pw, login_manager
 from application.forms import LoginForm, RegisterForm, NewFolder, NewPost
-import requests, json, sys
+import requests, json, sys, flask_login
 
 @app.route('/')
 @app.route('/login', methods=['GET','POST'])
@@ -12,8 +12,8 @@ def login():
 
         payload={'body':{"username":form.user_name.data}}
         userjson = requests.get('https://krqrgv5s6b.execute-api.eu-west-2.amazonaws.com/Forum/forumuser', json=payload)
-	    oof = userjson.json()
-	    user = oof['body']
+	oof = userjson.json()
+	user = oof['body']
 
         if user and pw.verify_password(user['password'], form.password.data):
             next_page = request.args.get('next')
@@ -126,7 +126,7 @@ def user_loader(username):
     payload = {'body':{"username":username}}
     userjson = requests.get('https://krqrgv5s6b.execute-api.eu-west-2.amazonaws.com/Forum/forumuser', json=payload)
     request = userjson.json()
-	account = request['body']
+    account = request['body']
     if account:
         user = User()
         user.id = account['username']
@@ -142,7 +142,7 @@ def request_loader(request):
     payload = {'body':{'username':username}}
     userjson = requests.get('https://krqrgv5s6b.execute-api.eu-west-2.amazonaws.com/Forum/forumuser', json=payload)
     request = userjson.json()
-	account = request['body']
+    account = request['body']
 
     if account:
         user = User()
