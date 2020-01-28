@@ -1,5 +1,5 @@
 from flask import render_template, redirect, url_for, Response, request
-from flask_login import login_user, current_user, logout_user
+from flask_login import login_user, current_user, logout_user, loginmanager
 from application import app, password_hash as pw
 from application.forms import LoginForm, RegisterForm, NewFolder, NewPost
 import requests, json, sys
@@ -12,8 +12,8 @@ def login():
 
         payload={'body':{"username":form.user_name.data}}
         userjson = requests.get('https://krqrgv5s6b.execute-api.eu-west-2.amazonaws.com/Forum/forumuser', json=payload)
-	oof = userjson.json()
-	user = oof['body']
+	    oof = userjson.json()
+	    user = oof['body']
 
         if user and pw.verify_password(user['password'], form.password.data):
             next_page = request.args.get('next')
@@ -41,6 +41,7 @@ def register():
         return render_template('register.html', title='Register', form=form)
 
 @app.route('/dashboard', methods=['GET','POST'])
+@login_required
 def dashboard():
     forums = []
     response = requests.get('https://krqrgv5s6b.execute-api.eu-west-2.amazonaws.com/Forum/forum-forums')
@@ -54,6 +55,7 @@ def dashboard():
     return render_template('dashboard.html', title='Dashboard', forums=forums)
 
 @app.route('/forum/<forum>', methods=['GET','POST'])
+@login_required
 def forum(forum):
     threads = []
     payload={"forum":forum}
@@ -68,6 +70,7 @@ def forum(forum):
     return render_template('forum.html', title=forum, threads=threads)
 
 @app.route('/thread/<forum>/<thread>', methods=['GET','POST'])
+@login_required
 def thread(forum, thread):
     payload={"forum":forum, "thread":thread}
     query = requests.get('https://krqrgv5s6b.execute-api.eu-west-2.amazonaws.com/Forum/forumpost', json=payload)
@@ -75,6 +78,7 @@ def thread(forum, thread):
     return render_template('thread.html', title=thread, posts=postlist, forum=forum, thread=thread)
 
 @app.route('/new_forum', methods=['GET','POST'])
+@login_required
 def new_forum():
     form = NewFolder()
     if form.validate_on_submit():
@@ -82,6 +86,7 @@ def new_forum():
     return render_template('newfolder.html', title='New Forum', form=form)
 
 @app.route('/new_thread/<forum>', methods=['GET','POST'])
+@login_required
 def new_thread(forum):
     form = NewFolder()
     if form.validate_on_submit():
@@ -89,6 +94,7 @@ def new_thread(forum):
     return render_template('newfolder.html', title='New Thread', form=form)
 
 @app.route('/new_post/<forum>/<thread>', methods=['GET','POST'])
+@login_required
 def new_post(forum, thread):
     form = NewPost()
     if form.validate_on_submit():
@@ -102,3 +108,48 @@ def new_post(forum, thread):
         return redirect(url_for('thread', forum=forum, thread=thread))
     return render_template('newpost.html', title='New Post', form=form)
 
+@app.route('/logout')
+def logout():
+    flask_login.logout_user()
+    return 'Logged out'
+
+@login_manager.unauthorized_handler
+def unauthorized_handler():
+    return 'Unauthorized'
+
+class User(flask_login.UserMixin):
+    pass
+
+
+@login_manager.user_loader
+def user_loader(username):
+    payload = {'body':{"username":username}}
+    userjson = requests.get('https://krqrgv5s6b.execute-api.eu-west-2.amazonaws.com/Forum/forumuser', json=payload)
+    request = userjson.json()
+	account = request['body']
+    if account:
+        user = User()
+        user.id = account['username']
+        return user
+    else:
+        return
+
+
+@login_manager.request_loader
+def request_loader(request):
+
+    username = request.form.get('username')
+    payload = {'body':{'username':username}}
+    userjson = requests.get('https://krqrgv5s6b.execute-api.eu-west-2.amazonaws.com/Forum/forumuser', json=payload)
+    request = userjson.json()
+	account = request['body']
+
+    if account:
+        user = User()
+        user.id = username
+    else: 
+        return
+
+    user.is_authenticated = request.form['password'] == account['password']
+
+    return user
